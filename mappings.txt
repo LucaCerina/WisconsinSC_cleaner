@@ -1,0 +1,77 @@
+# This is a comment line and is not parsed
+# Events are converted to lowercase, so there is no need to be case sensitive in the original source string
+
+# Recording technical Events
+recording:start|START RECORDING
+recording:pause|PAUSED
+
+# Respiratory events
+apnea:obstructive|obs apnea|oa|apnea|obst apnea|obst. apnea|respiratory event obstructive apnea
+apnea:central|respiratory event central apnea
+apnea:mixed|respiratory event mixed apnea
+hypopnea|respiratory event hypopnea
+
+# Desaturations
+desaturation|desaturation
+
+# Arousals
+arousal:spontaneous|arousal spontaneous
+arousal:respiratory|arousal respiratory event
+arousal:lm|arousal lm
+arousal:plm|arousal plm
+
+# Leg movements
+leg_movement:isolated|lm isolated
+
+
+# Stages
+# Gamma
+stage:undefined|STAGE - NO STAGE|stage - mvt
+stage:w|STAGE - W|sleep status - awake
+stage:n1|STAGE - N1
+stage:n2|STAGE - N2
+stage:n3|STAGE - N3
+stage:rem|STAGE - R
+
+# Position
+# Gamma
+position:supine|POSITION - SUPINE
+position:prone|POSITION - PRONE
+position:left|POSITION - LEFT
+position:right|POSITION - RIGHT
+position:sitting|POSITION - SITTING
+position:disconnect|position - disconnect
+
+# Lights
+# Gamma
+lights:out|LIGHTS OUT
+lights:on|LIGHTS ON
+
+# Miscellanea
+# Gamma
+event:patient_to_bathroom|PT. TO BATHROOM|to bathroom|bathroom|using urinal
+event:patient_in_bed|BACK IN BED
+event:patient_disconnection|patient disconnected
+event:technician_in|tech in|tech in room
+event:technician_out|tech out
+
+# Calibration
+# Gamma
+biocal:montage|NEW MONTAGE - NPSG STANDARD PLUS
+biocal:end_calibration|end biocals
+biocal:eyes_closed|EYES CLOSED
+biocal:eyes_open|EYES OPEN
+biocal:eyes_blink_x5|EYES BLINK 5 X
+biocal:look_left|LOOK LEFT|eyes left
+biocal:look_right|LOOK RIGHT|eyes right|look r
+biocal:look_up|LOOK UP|eyes up
+biocal:look_down|LOOK DOWN
+biocal:teeth_grit|GRIT TEETH
+biocal:leg_flex_left|FLEX LEFT LEG
+biocal:leg_flex_right|FLEX RIGHT LEG
+biocal:breath_hold|HOLD BREATH|breath hold
+biocal:breath_mouth|BREATH THRU MOUTH
+biocal:breath_nose|BREATH THRU NOSE
+biocal:breath_snore|SNORE
+biocal:tongue|TONGUE
+biocal:count|COUNT
