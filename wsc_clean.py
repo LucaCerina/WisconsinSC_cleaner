@@ -58,8 +58,8 @@ def parse_event_gamma(event_string:str, mapping:dict) -> Union[dict, None]:
         regex = r"(?P<event_key>[\w]+\s[\w]+) - dur: (?P<Duration>[\d]+.[\d]) sec. - (?P<event_type>[\w]+\s?[\w]*) - desat (?P<Param1>[-]?[\d]+.[\d]|<n/a>)\s?[%]?"
     elif event_string.startswith('desat'):
         regex = r"(?P<event_key>[\w]+) - dur: (?P<Duration>[\d]+.[\d]) sec. - min (?P<Param1>[\d]+.[\d]) % - drop (?P<Param2>[-]?[\d]+.[\d]) %"
-    elif event_string.startswith('arousal') or event_string.startswith('lm'):
-        regex = r"(?P<event_key>[\w]+)(- dur: (?P<Duration>[\d]+.[\d]) sec. |\s)- (?P<event_type>[\w]+\s?[\w]*)"
+    elif any(event_string.startswith(x) for x in ['arousal', 'lm', 'ekg', 'snore']):
+        regex = r"(?P<event_key>([\w]+|[\w]+\s[\w]+))( - dur: (?P<Duration>[\d]+.[\d]) sec. |\s)- (?P<event_type>[\w]+\s?[\w]*)"
     else:
         return None
 
@@ -69,6 +69,9 @@ def parse_event_gamma(event_string:str, mapping:dict) -> Union[dict, None]:
         try:
             # Fill results
             match_dict = match.groupdict()
+            # if match_dict['event_key']=='arousal':
+            #     print(event_string)
+            #     print(match_dict)
             output['EventKey'] = map_event(f"{match_dict['event_key']} {match_dict.get('event_type','')}".strip(), mapping)
             output['Duration'] = match_dict.get('Duration', 3.0) # Default for some events in Gamma recordings (e.g. arousals)
             for i in range(1, 4):
@@ -96,7 +99,7 @@ def process_gamma_log(input_filename:str, output_filename:str, mapping:dict) -> 
     no_error = True
     unmapped = set()
 
-    with open(input_filename, 'r') as input_file, open(output_filename, 'w') as output_file:
+    with open(input_filename, 'r', encoding='utf-8', errors='ignore') as input_file, open(output_filename, 'w', encoding='utf-8') as output_file:
         # Write output header
         writer = DictWriter(output_file, fieldnames=OUTPUT_HEADER, lineterminator='\n')
         writer.writeheader()
@@ -117,9 +120,10 @@ def process_gamma_log(input_filename:str, output_filename:str, mapping:dict) -> 
             output_line['Timestamp'] = timestamp
 
             # Primary event key
-            event_key = input_line_split[1].split(' -')[0]
+            event_string_split = input_line_split[1].split(' -')
+            event_key = event_string_split[0]
             # Parse events with or without durations
-            if event_key in ['arousal', 'respiratory event', 'desaturation', 'lm']:
+            if event_key in ['arousal', 'respiratory event', 'desaturation', 'lm', 'ekg events', 'snore'] and len(event_string_split)>1:
                 parsed_line = parse_event_gamma(input_line_split[1], mapping)
                 if parsed_line is None:
                     print(f"Parsing error Gamma in line: {input_line_split[1]}")
@@ -128,8 +132,8 @@ def process_gamma_log(input_filename:str, output_filename:str, mapping:dict) -> 
                 output_line.update(parsed_line)
             else:
                 output_line['EventKey'] = map_event(input_line_split[1], mapping)
-                if output_line['EventKey'].startswith('misc'):
-                    unmapped.add(output_line['EventKey'])
+            if output_line['EventKey'].startswith('misc'):
+                unmapped.add(output_line['EventKey'])
             writer.writerow(output_line)
 
     return no_error, unmapped
@@ -159,6 +163,7 @@ if __name__ == "__main__":
     non_mapped_lines = set()
 
     # Process recordings
+    # recordings = ['wsc-visit2-31738-nsrr']
     for i, recording in enumerate(recordings, start=1):
         print(f"Processing {recording} : {i}|{n_recordings}")
         # Output file
@@ -179,7 +184,9 @@ if __name__ == "__main__":
             print(f"Error in parsing recording {recording}. Exiting.")
             sys.exit(1)
     
-    print("Non mapped lines that may need further checks: ")
-    for line in non_mapped_lines:
-        print(line)
+    print(f"Non mapped lines that may need further checks: {len(non_mapped_lines)}")
+    with open('./WSC_non_mapped_lines.txt', 'w', encoding='utf-8') as nfile:
+        for line in non_mapped_lines:
+            print(line)
+            nfile.write(line+'\n')
         

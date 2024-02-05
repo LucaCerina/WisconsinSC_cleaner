@@ -13,6 +13,8 @@ Other issues relates to missing information in the annotations' columns, inconsi
 A single python script (no installation needed) parses all the annotation files and produce another set of annotation files with the suffix `.uniform.txt`.
 The mapping of annotations is available in the `mappings.txt` file in the form `A|B|C` (see [https://zzz.bwh.harvard.edu/luna/ref/annotations/#remap] for details), meaning that every instance of `B` or `C` will be mapped as `A`. If a mapping does not exist, the original value is returned with a prefix `misc:`.
 
+An extra text file includes all lines that were not mapped.
+
 If a recording uses the Gamma format (allscore.txt files) the output is kept as one file.
 If it uses the Twin format (log.txt files) sleep stages and event scoring are merged together with the log.
 
@@ -36,7 +38,7 @@ The duration is defined by the next event of the same type
 Duration of the event in seconds, SpO2 minimum of the event [%], 0, 0
 ### Oxygen desaturations
 Duration of the event in seconds, SpO2 minimum of the event [%], SpO2 drop [%], 0
-### Leg movements and arousals
+### Leg movements, arousals, ekg events, snore and any other without additional parameters
 Duration of the event in seconds, 0, 0, 0
 
 ## How to use this script

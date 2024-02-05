@@ -4,12 +4,14 @@
 # Recording technical Events
 recording:start|START RECORDING
 recording:pause|PAUSED
+recording:resume|RECORDING RESUMED
 
 # Respiratory events
 apnea:obstructive|obs apnea|oa|apnea|obst apnea|obst. apnea|respiratory event obstructive apnea
 apnea:central|respiratory event central apnea
 apnea:mixed|respiratory event mixed apnea
 hypopnea|respiratory event hypopnea
+snore:periodic|snore periodic
 
 # Desaturations
 desaturation|desaturation
@@ -19,10 +21,15 @@ arousal:spontaneous|arousal spontaneous
 arousal:respiratory|arousal respiratory event
 arousal:lm|arousal lm
 arousal:plm|arousal plm
+arousal:snore|arousal snore
+arousal:noise|arousal noise
 
 # Leg movements
 leg_movement:isolated|lm isolated
+movement|movement
 
+# EKG events
+arrhythmia:tachycardia|ekg events sinus tachycardia
 
 # Stages
 # Gamma
@@ -38,7 +45,7 @@ stage:rem|STAGE - R
 position:supine|POSITION - SUPINE
 position:prone|POSITION - PRONE
 position:left|POSITION - LEFT
-position:right|POSITION - RIGHT
+position:right|POSITION - RIGHT|position right
 position:sitting|POSITION - SITTING
 position:disconnect|position - disconnect
 
@@ -52,13 +59,29 @@ lights:on|LIGHTS ON
 event:patient_to_bathroom|PT. TO BATHROOM|to bathroom|bathroom|using urinal
 event:patient_in_bed|BACK IN BED
 event:patient_disconnection|patient disconnected
+event:patient_connection|patient connected
 event:technician_in|tech in|tech in room
 event:technician_out|tech out
 
-# Calibration
+# Calibration and montage
 # Gamma
-biocal:montage|NEW MONTAGE - NPSG STANDARD PLUS
+new_montage:npsg_std_plus|NEW MONTAGE - NPSG STANDARD PLUS
+new_montage:npsg_std|NEW MONTAGE - NPSG STANDARD
+new_montage:npsg_std_plus_tied_ears|new montage - npsg standard plus tied ears
+new_montage:npsg_std_tied_ears|new montage - npsg tied ears
+new_montage:staging|new montage - staging
+new_montage:staging_tied_ears|new montage - staging tied ears
+new_montage:dopp_std|new montage - dopp standard
+new_montage:asthma|new montage - asthma
+new_montage:ekg_only|new montage - ekg only
+new_montage:mslt_tied_ears|new montage - mslt tied ears
+
 biocal:end_calibration|end biocals
+biocal:impedance_check|impedance check
+
+biocal:steady_state_eyes_closed|ss ec|ssec|steady state ec
+biocal:steady_state_eyes_open|ss eo|sseo|ss e0
+biocal:steady_state_undefined|steady state
 biocal:eyes_closed|EYES CLOSED
 biocal:eyes_open|EYES OPEN
 biocal:eyes_blink_x5|EYES BLINK 5 X
@@ -66,9 +89,12 @@ biocal:look_left|LOOK LEFT|eyes left
 biocal:look_right|LOOK RIGHT|eyes right|look r
 biocal:look_up|LOOK UP|eyes up
 biocal:look_down|LOOK DOWN
+
 biocal:teeth_grit|GRIT TEETH
 biocal:leg_flex_left|FLEX LEFT LEG
 biocal:leg_flex_right|FLEX RIGHT LEG
+biocal:position_right_side|test r side|test right side|test right side position|test r sdie|test r side pos|test r sie|tesst r side
+
 biocal:breath_hold|HOLD BREATH|breath hold
 biocal:breath_mouth|BREATH THRU MOUTH
 biocal:breath_nose|BREATH THRU NOSE
