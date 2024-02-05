@@ -2,8 +2,10 @@
 import re
 import sys
 from csv import DictWriter
+from datetime import datetime, timedelta
 from glob import glob
 from itertools import zip_longest
+from time import perf_counter
 from typing import Tuple, Union
 
 from pathlib2 import Path
@@ -15,6 +17,21 @@ __email__       = "lccerina@duck.com"
 
 OUTPUT_HEADER = ["Timestamp","EventKey","Duration","Param1","Param2","Param3"]
 map_event = lambda x,m: m.get(x, f"misc:{x}")
+
+def datetime_sorter(start_time:datetime, input_time:datetime) -> int:
+    """Return distance from start of recording in seconds to sort output list in Twin parsing.
+
+    Args:
+        start_time (datetime): Start time of the recording from Twin log file
+        input_time (datetime): Input time to be aligned
+
+    Returns:
+        int: Total seconds between start time and input
+    """
+    delta = input_time - start_time
+    while delta.days < 0:
+        delta += timedelta(days=1)
+    return delta.total_seconds()
 
 def load_mappings(mapping_file:str) -> dict:
     """Convert maps in mappings.txt file to a dictionary to be used later.
@@ -82,13 +99,12 @@ def parse_event_gamma(event_string:str, mapping:dict) -> Union[dict, None]:
     else:
         return None
         
-
-
-def process_gamma_log(input_filename:str, output_filename:str, mapping:dict) -> Tuple[bool, set]:
-    """Parse lines from Gamma/allscore files.
+def process_gamma_log(recording:str, input_filename:str, output_filename:str, mapping:dict) -> Tuple[bool, set]:
+    """Parse lines from Gamma/allscore files. This function receives the filename ending as 'allscore.txt'
 
     Args:
-        input_filename (str): Input log file
+        recording (str): id of the recording
+        input_filename (str): Input log file e.g wsc-visit1-100000-nsrr.allscore.txt
         output_filename (str): Output '.uniform.txt' log file
         mapping (dict): Dictionary to map event keys. See mappings.txt
 
@@ -99,6 +115,7 @@ def process_gamma_log(input_filename:str, output_filename:str, mapping:dict) -> 
     no_error = True
     unmapped = set()
 
+    assert input_filename.endswith('allscore.txt'), f"Error in Gamma parser. Expected an allscore log file, got {input_filename}"
     with open(input_filename, 'r', encoding='utf-8', errors='ignore') as input_file, open(output_filename, 'w', encoding='utf-8') as output_file:
         # Write output header
         writer = DictWriter(output_file, fieldnames=OUTPUT_HEADER, lineterminator='\n')
@@ -132,9 +149,117 @@ def process_gamma_log(input_filename:str, output_filename:str, mapping:dict) -> 
                 output_line.update(parsed_line)
             else:
                 output_line['EventKey'] = map_event(input_line_split[1], mapping)
+            
+            # Log non mapped / misc lines
             if output_line['EventKey'].startswith('misc'):
-                unmapped.add(output_line['EventKey'])
+                unmapped.add(f"{recording} - {output_line['Timestamp']} - {output_line['EventKey']}")
             writer.writerow(output_line)
+
+    return no_error, unmapped
+
+def parse_twin_timestamp(timestamp_str:str, start_time:datetime=None) -> Union[datetime,None]:
+    """Parse timestamps in Twin logs using the hh:mm:ss string or the epoch if start time is available.
+
+    Args:
+        timestamp_str (str): String in the first (if correctly formatted) column of the log file.
+        start_time (datetime, optional): Start time of the recording from the first line of the log file. Defaults to None.
+
+    Returns:
+        datetime: parsed datetime
+        None: error in parsing
+    """
+    timestamp_split = re.sub("\s+", " ", timestamp_str).split()
+    if len(timestamp_split)<=2 and re.match(r"\d{2}:\d{2}:\d{2}", timestamp_split[0]):
+        return datetime.strptime(timestamp_split[0], "%H:%M:%S")
+    elif len(timestamp_split)<=2 and start_time is not None:
+        if re.match(r"\d+", timestamp_split[0]):
+            return start_time+timedelta(seconds=(int(timestamp_split[0])-1)*30)
+        elif len(timestamp_split)==2 and re.match(r"\d+", timestamp_split[1]):
+            return start_time+timedelta(seconds=(int(timestamp_split[1])-1)*30)
+        else:
+            return None
+    else:
+        print(timestamp_split)
+        return None
+
+def process_gamma_twin(recording:str, input_filename:str, output_filename:str, mapping:dict) -> Tuple[bool, set]:
+    """Parse lines from Twin/(log,sco,stg) files. This function receives only the recording id and then apply the specific suffixes
+
+    Args:
+        recording (str): id of the recording
+        input_filename (str): Input log file e.g wsc-visit1-100000-nsrr
+        output_filename (str): Output '.uniform.txt' log file
+        mapping (dict): Dictionary to map event keys. See mappings.txt
+
+    Returns:
+        bool: True if parsing concluded with no errors
+        set: Set of values that were not mapped (misc: prefix)
+    """
+    no_error = True
+    unmapped = set()
+
+    assert input_filename.endswith("-nsrr"), f"Error in Twin parser. Expected input filename to indicate recording id, not specific files. Got {input_filename}"
+
+    # Output is stored in a list of tuples (timestamp, values) so it can be ordered before writing the output file
+    temp_output = []
+    start_time = datetime.fromtimestamp(0)
+
+    # Start by parsing the log file
+    log_filename = f"{input_filename}.log.txt"
+    with open(log_filename, "r") as log_file:
+        for i, log_line in enumerate(log_file):
+            log_line = log_line.lower().strip('\t \n')
+            log_line_split = log_line.split('\t')
+            if len(log_line)<=1 or len(log_line_split)<=2:
+                continue
+
+            # Some lines do not start correctly
+            if log_line_split[0].startswith('--/'):
+                log_line_split = log_line_split[1:]
+            
+            # Parse timestamp
+            timestamp = parse_twin_timestamp(log_line_split[0], start_time)
+            if timestamp is None:
+                print(f"Parsing error Twin in line: {log_line}")
+                continue
+
+            # First line checks
+            if i == 0:
+                if timestamp.hour>12: # Most of the timestamps are on 24h, some have am/pm timestamps
+                    timestamp_correction = timedelta(hours=0)
+                else:
+                    timestamp_correction = timedelta(hours=12)
+                start_time = timestamp+timestamp_correction
+
+            # Create output line
+            output_line = {k:v for (k,v) in zip(OUTPUT_HEADER, ['00:00:00.00', 'error', -1, 0, 0, 0])}
+
+            # Parse line
+            timestamp = timestamp + timestamp_correction
+            output_line['Timestamp'] = timestamp.strftime("%H:%M:%S.00")
+            event_key = log_line_split[1].strip("\t ")
+            # Skip empty lines
+            if len(event_key)==0:
+                continue
+            output_line['EventKey'] = map_event(event_key, mapping)
+            
+            # Log non mapped / misc lines
+            if output_line['EventKey'].startswith('misc'):
+                unmapped.add(f"{recording} - {timestamp} - {output_line['EventKey']}")
+
+            # Append results
+            temp_output.append((timestamp, output_line))
+
+
+    # Sort and write output
+    temp_output.sort(key=lambda x:datetime_sorter(start_time, x[0]))
+    with open(output_filename, 'w', encoding='utf-8') as output_file:
+        # Write output header
+        writer = DictWriter(output_file, fieldnames=OUTPUT_HEADER, lineterminator='\n')
+        writer.writeheader()
+        # Write lines
+        for _,output_line in temp_output:
+            writer.writerow(output_line)        
 
     return no_error, unmapped
 
@@ -164,29 +289,50 @@ if __name__ == "__main__":
 
     # Process recordings
     # recordings = ['wsc-visit2-31738-nsrr']
+    eta = None
+    total_time = 0
     for i, recording in enumerate(recordings, start=1):
-        print(f"Processing {recording} : {i}|{n_recordings}")
-        # Output file
+        eta_str = f"ETA : {eta}" if eta is not None else ""
+        print(f"Processing {recording} : {i}|{n_recordings}. {eta_str}")
+
+        # Log time start
+        t_start = perf_counter()
+
+        # Filenames
+        recording_path = f"{folder}/{recording}"
+        allscore_filename = f"{recording_path}.allscore.txt"
         output_filename = f"{folder}/{recording}.uniform.txt"
 
         # Detect type of log
-        allscore_filename = f"{folder}/{recording}.allscore.txt"
         has_allscore = Path(allscore_filename).exists()
 
         # Parse file
         if not has_allscore:
             no_error = True
-            raise NotImplementedError
-        else:
-            no_error, unmapped  = process_gamma_log(allscore_filename, output_filename, mapping)
+            # raise NotImplementedError
+            no_error, unmapped  = process_gamma_twin(recording, recording_path, output_filename, mapping)
             non_mapped_lines.update(unmapped)
+        else:
+            no_error = True
+            # TODO passthrough while working on twin files
+            # no_error, unmapped  = process_gamma_log(recording, allscore_filename, output_filename, mapping)
+            # non_mapped_lines.update(unmapped)
         if no_error == False:
             print(f"Error in parsing recording {recording}. Exiting.")
             sys.exit(1)
+
+        # Log time end and update ETA
+        t_end = perf_counter()
+        total_time += (t_end-t_start)
+        eta = timedelta(seconds=(n_recordings-i)*(total_time/(i+1)))
+
+    print(f"Parsing of {n_recordings} recordings completed in {timedelta(seconds=total_time)}.")
     
-    print(f"Non mapped lines that may need further checks: {len(non_mapped_lines)}")
-    with open('./WSC_non_mapped_lines.txt', 'w', encoding='utf-8') as nfile:
+    # Store unmapped lines
+    non_mapped_filename = 'WSC_non_mapped_lines.txt'
+    non_mapped_lines = sorted(list(non_mapped_lines), key=lambda x:x.split(' - ')[-1])
+    print(f"Non mapped lines that may need further checks: {len(non_mapped_lines)}. See {non_mapped_filename}")
+    with open(f'./{non_mapped_filename}', 'w', encoding='utf-8') as nfile:
         for line in non_mapped_lines:
-            print(line)
             nfile.write(line+'\n')
         
