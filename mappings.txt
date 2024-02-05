@@ -2,9 +2,10 @@
 # Events are converted to lowercase, so there is no need to be case sensitive in the original source string
 
 # Recording technical Events
-recording:start|START RECORDING
+recording:start|START RECORDING|recording started
 recording:pause|PAUSED
-recording:resume|RECORDING RESUMED
+recording:resume|RECORDING RESUMED|recoring restarted|recording continued
+recording:stop|STOP RECORDING|recording stopped
 
 # Respiratory events
 apnea:obstructive|obs apnea|oa|apnea|obst apnea|obst. apnea|respiratory event obstructive apnea
@@ -12,6 +13,9 @@ apnea:central|respiratory event central apnea
 apnea:mixed|respiratory event mixed apnea
 hypopnea|respiratory event hypopnea
 snore:periodic|snore periodic
+
+# Artifacts
+artifact:cough|coughing|cough
 
 # Desaturations
 desaturation|desaturation
@@ -32,7 +36,6 @@ movement|movement
 arrhythmia:tachycardia|ekg events sinus tachycardia
 
 # Stages
-# Gamma
 stage:undefined|STAGE - NO STAGE|stage - mvt
 stage:w|STAGE - W|sleep status - awake
 stage:n1|STAGE - N1
@@ -41,30 +44,26 @@ stage:n3|STAGE - N3
 stage:rem|STAGE - R
 
 # Position
-# Gamma
-position:supine|POSITION - SUPINE
-position:prone|POSITION - PRONE
-position:left|POSITION - LEFT
-position:right|POSITION - RIGHT|position right
+position:supine|POSITION - SUPINE|back
+position:prone|POSITION - PRONE|front
+position:left|POSITION - LEFT|left
+position:right|POSITION - RIGHT|position right|right
 position:sitting|POSITION - SITTING
 position:disconnect|position - disconnect
 
 # Lights
-# Gamma
-lights:out|LIGHTS OUT
+lights:off|LIGHTS OUT|light out
 lights:on|LIGHTS ON
 
 # Miscellanea
-# Gamma
-event:patient_to_bathroom|PT. TO BATHROOM|to bathroom|bathroom|using urinal
-event:patient_in_bed|BACK IN BED
+event:patient_to_bathroom|PT. TO BATHROOM|to bathroom|bathroom|using urinal|bathroom break|bathroom break, replaced paddle|went to bathroom|used urinal|used bathroom after biocals
+event:patient_in_bed|BACK IN BED|back from bathroom|ack from bathroom
 event:patient_disconnection|patient disconnected
 event:patient_connection|patient connected
 event:technician_in|tech in|tech in room
 event:technician_out|tech out
 
 # Calibration and montage
-# Gamma
 new_montage:npsg_std_plus|NEW MONTAGE - NPSG STANDARD PLUS
 new_montage:npsg_std|NEW MONTAGE - NPSG STANDARD
 new_montage:npsg_std_plus_tied_ears|new montage - npsg standard plus tied ears
@@ -76,28 +75,40 @@ new_montage:asthma|new montage - asthma
 new_montage:ekg_only|new montage - ekg only
 new_montage:mslt_tied_ears|new montage - mslt tied ears
 
-biocal:end_calibration|end biocals
+biocal:start_calibration|biocal started
+biocal:end_calibration|end biocals|biocal stopped
 biocal:impedance_check|impedance check
+biocal:iso_maneuver|iso|iso manuever|iso maneuver
 
-biocal:steady_state_eyes_closed|ss ec|ssec|steady state ec
-biocal:steady_state_eyes_open|ss eo|sseo|ss e0
+biocal:steady_state_eyes_closed|ss ec|ssec|steady state ec|steady state eyes closed|start steady state - ec|start steady state-ec|eyes closed ss|resuming ss ec|start steady stae -ec|start steady state ec
+biocal:steady_state_eyes_open|ss eo|sseo|ss e0|steady state eyes open|begin steady state-eo|steady state eo|start stready state- eo|start steady state - eo|start steady state-eo|start steady state eo|start steady state-eyes open
 biocal:steady_state_undefined|steady state
+# NOTE opted to have one signle annotation for end steady state
+biocal:steady_state_end|end steady state ec|end steady state eo|stop steady state eyes open|end steady state-ec|end steady state - ec|end steady state
+biocal:steady_state_end|stop steady state eo|stop steady state - eo|stop steady stae- eo|end steady state-eo|end steady state - eo|end ss eo
 biocal:eyes_closed|EYES CLOSED
 biocal:eyes_open|EYES OPEN
-biocal:eyes_blink_x5|EYES BLINK 5 X
-biocal:look_left|LOOK LEFT|eyes left
-biocal:look_right|LOOK RIGHT|eyes right|look r
-biocal:look_up|LOOK UP|eyes up
-biocal:look_down|LOOK DOWN
+biocal:eyes_blink_x5|EYES BLINK 5 X|blick
+biocal:eyes_blink|blink|blink several times
+
+biocal:look_left|LOOK LEFT|eyes left|eyes left and back|move eyes left & center|move eyes left, back
+biocal:look_right|LOOK RIGHT|eyes right|look r|eyes right and back|move eyes right & center|move eyes right, back
+biocal:look_up|LOOK UP|eyes up|eyes up and back|move eyes up, back
+biocal:look_down|LOOK DOWN|eyes down and back|move eyes down, back|eyes down
 
 biocal:teeth_grit|GRIT TEETH
+biocal:clenc_jaw|clench jaw||clench teeth|clench
 biocal:leg_flex_left|FLEX LEFT LEG
 biocal:leg_flex_right|FLEX RIGHT LEG
+biocal:toe_flex_right|flex right big toe|flex r toe|flex r big toe
+biocal:toe_flex_left|flex left big toe|flex l toe|flex l big toe
 biocal:position_right_side|test r side|test right side|test right side position|test r sdie|test r side pos|test r sie|tesst r side
+biocal:test_position_sensor|test body position|test pos monitor|test position sensor
 
-biocal:breath_hold|HOLD BREATH|breath hold
-biocal:breath_mouth|BREATH THRU MOUTH
-biocal:breath_nose|BREATH THRU NOSE
-biocal:breath_snore|SNORE
-biocal:tongue|TONGUE
-biocal:count|COUNT
+biocal:breath_hold|HOLD BREATH|breath hold|begin breath hold|start breath hold
+biocal:breath_hold_end|end breath hold
+biocal:breath_mouth|BREATH THRU MOUTH|mouth breathe|mouth breathing
+biocal:breath_nose|BREATH THRU NOSE|nose breathe|nose breathing
+biocal:breath_snore|SNORE|make snore sounds|make snoring sounds
+biocal:tongue|TONGUE|move tongue
+biocal:count|COUNT|count 1 to 10|count 1-10|count from 1 to 10|counting
