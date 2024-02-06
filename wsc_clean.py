@@ -157,7 +157,7 @@ def process_gamma_log(recording:str, input_filename:str, output_filename:str, ma
 
     return no_error, unmapped
 
-def parse_twin_timestamp(timestamp_str:str, start_time:datetime=None) -> Union[datetime,None]:
+def parse_timestamp_twin(timestamp_str:str, start_time:datetime=None) -> Union[datetime,None]:
     """Parse timestamps in Twin logs using the hh:mm:ss string or the epoch if start time is available.
 
     Args:
@@ -182,7 +182,7 @@ def parse_twin_timestamp(timestamp_str:str, start_time:datetime=None) -> Union[d
         print(timestamp_split)
         return None
 
-def process_gamma_twin(recording:str, input_filename:str, output_filename:str, mapping:dict) -> Tuple[bool, set]:
+def process_twin_log(recording:str, input_filename:str, output_filename:str, mapping:dict) -> Tuple[bool, set]:
     """Parse lines from Twin/(log,sco,stg) files. This function receives only the recording id and then apply the specific suffixes
 
     Args:
@@ -218,7 +218,7 @@ def process_gamma_twin(recording:str, input_filename:str, output_filename:str, m
                 log_line_split = log_line_split[1:]
             
             # Parse timestamp
-            timestamp = parse_twin_timestamp(log_line_split[0], start_time)
+            timestamp = parse_timestamp_twin(log_line_split[0], start_time)
             if timestamp is None:
                 print(f"Parsing error Twin in line: {log_line}")
                 continue
@@ -310,7 +310,7 @@ if __name__ == "__main__":
         if not has_allscore:
             no_error = True
             # raise NotImplementedError
-            no_error, unmapped  = process_gamma_twin(recording, recording_path, output_filename, mapping)
+            no_error, unmapped  = process_twin_log(recording, recording_path, output_filename, mapping)
             non_mapped_lines.update(unmapped)
         else:
             no_error = True
