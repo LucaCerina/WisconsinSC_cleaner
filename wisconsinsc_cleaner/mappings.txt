@@ -122,7 +122,7 @@ biocal:look_left|LOOK LEFT|eyes left|eyes left and back|move eyes left & center|
 biocal:look_right|LOOK RIGHT|eyes right|look r|eyes right and back|move eyes right & center|move eyes right, back
 biocal:look_up|LOOK UP|eyes up|eyes up and back|move eyes up, back|up
 biocal:look_down|LOOK DOWN|eyes down and back|move eyes down, back|eyes down
-biocal:look_left_righteyes left and right
+biocal:look_left_right|eyes left and right
 
 biocal:teeth_grit|GRIT TEETH
 biocal:clenc_jaw|clench jaw||clench teeth|clench

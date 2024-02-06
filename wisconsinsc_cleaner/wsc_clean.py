@@ -6,6 +6,7 @@ from copy import copy
 from csv import DictReader, DictWriter
 from datetime import datetime, timedelta
 from glob import glob
+from importlib import resources
 from itertools import zip_longest
 from time import perf_counter
 from typing import Tuple, Union
@@ -38,10 +39,12 @@ def datetime_sorter(start_time:datetime, input_time:datetime) -> int:
         delta += timedelta(days=1)
     return delta.total_seconds()
 
-def load_mappings(mapping_file:str) -> dict:
+def load_mappings() -> dict:
     """Convert maps in mappings.txt file to a dictionary to be used later.
     Raise ValueError in case of badly formatted map
     """
+    # TODO bit of a clunky path here
+    mapping_file = resources._get_package('wisconsinsc_cleaner').__path__._path[0]+'/mappings.txt'
     assert Path(mapping_file).exists(), f"Mapping file {mapping_file} not found."
     with open(mapping_file) as map_file:
         maps = map_file.read().splitlines()
@@ -414,7 +417,7 @@ def process_gamma_log(recording:str, input_filename:str, output_filename:str, ma
 
     return no_error, unmapped
 
-if __name__ == "__main__":
+def main():
     # Get data folder
     if len(sys.argv)<2:
         print("Error! Usage wsc_clean.py <wsc_polysomnography_folder>")
@@ -426,7 +429,7 @@ if __name__ == "__main__":
 
     # Load annotations mappings
     print("Loading mappings")
-    mapping = load_mappings('./mappings.txt')
+    mapping = load_mappings()
 
     # Get all recordings
     print("Identifying recordings")
@@ -484,3 +487,5 @@ if __name__ == "__main__":
         for line in non_mapped_lines:
             nfile.write(line+'\n')
         
+if __name__ == "__main__":
+    main()

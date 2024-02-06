@@ -10,9 +10,17 @@ For example, obstructive apneas may be formatted as: 'Obs Apnea', 'OBS Apnea', '
 Other issues relates to missing information in the annotations' columns, inconsistent time formats (most are 24h, some am/pm) and other dirty bits that are not necessary and complicate automatic parsing.
 
 ## How to use this script
-Clone the repo or download the `wsc_clean.py` file and run it from command line as:
+Clone the repo or download the `wsc_clean.py` and `mappings.txt` file and run it from command line as:
 
 `python wsc_clean.py <your_dataset_polysomnography_folder>`
+
+The package can be also installed from PyPI:
+
+`pip install wisconsinsc_cleaner`
+
+and executed as:
+
+`wsc_clean <your_dataset_polysomnography_folder>`
 
 ## Content of this repo
 A single python script (no installation needed) parses all the annotation files and produce another set of annotation files with the suffix `.uniform.txt`.

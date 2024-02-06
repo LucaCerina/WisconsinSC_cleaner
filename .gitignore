@@ -161,3 +161,4 @@ cython_debug/
 
 # Repo specific
 WSC_non_mapped_lines.txt
+build.bat
