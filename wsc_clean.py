@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-from copy import copy
 import re
 import sys
 import warnings
-from csv import DictWriter, DictReader
+from copy import copy
+from csv import DictReader, DictWriter
 from datetime import datetime, timedelta
 from glob import glob
 from itertools import zip_longest
