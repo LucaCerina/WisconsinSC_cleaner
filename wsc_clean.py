@@ -42,6 +42,7 @@ def load_mappings(mapping_file:str) -> dict:
     """Convert maps in mappings.txt file to a dictionary to be used later.
     Raise ValueError in case of badly formatted map
     """
+    assert Path(mapping_file).exists(), f"Mapping file {mapping_file} not found."
     with open(mapping_file) as map_file:
         maps = map_file.read().splitlines()
     
@@ -338,7 +339,7 @@ def process_gamma_log(recording:str, input_filename:str, output_filename:str, ma
             
             # Log non mapped / misc lines
             if output_line['EventKey'].startswith('misc'):
-                unmapped.add(f"{recording} - {timestamp} - {output_line['EventKey']}")
+                unmapped.add(f"{recording} - {output_line['Timestamp']} - {output_line['EventKey']}")
 
             # Append results
             temp_output.append((timestamp, output_line))
@@ -399,7 +400,7 @@ def process_gamma_log(recording:str, input_filename:str, output_filename:str, ma
 
             # Log non mapped / misc lines
             if output_line['EventKey'].startswith('misc'):
-                unmapped.add(f"{recording} - {timestamp} - {output_line['EventKey']}")
+                unmapped.add(f"{recording} - {output_line['Timestamp']} - {output_line['EventKey']}")
 
     # Sort and write output
     temp_output.sort(key=lambda x:datetime_sorter(start_time, x[0]))
