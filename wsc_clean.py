@@ -182,10 +182,17 @@ def parse_timestamp_gamma(timestamp_str:str, start_time:datetime=None, timestamp
         else:
             return None
     else:
-        print(timestamp_split)
         return None
     
 def parse_gain_gamma(event_string:str) -> Union[dict, None]:
+    """Parse lines in gamma files referring to gain changes
+
+    Args:
+        event_string (str): Input string in the form: '<sensor> (<channel>) : gain : <value>'
+
+    Returns:
+        Union[dict, None]: Parsed line. None in case of error
+    """
     output = {}
     # Remove extra whitespaces
     event_string_sub = re.sub("\s+", " ", event_string).strip("\t ")
@@ -202,10 +209,21 @@ def parse_gain_gamma(event_string:str) -> Union[dict, None]:
         output['Param2'] = match_dict['Param2']
         return output
     else:
-        print(event_string_sub)
         return None
 
 def parse_event_gamma(event_string:str, start_time:datetime, timestamp_correction:timedelta, mapping:dict) -> Union[dict, None]:
+    """Parse events with duration and extra parameters from Gamma/.sco log files.
+       Return None in case of errors
+
+    Args:
+        event_string (str): String description of the event
+        start_time (datetime, optional): Start time of the recording from the first line of the log file. Defaults to None.
+        timestamp_correction (timedelta, optional): Correction for am/pm logs
+        mapping (dict): Dictionary to map event keys. See mappings.txt
+
+    Returns:
+        dict: Mapped event with duration and params. None in case of errors
+    """
     # Create output line
     output_line = copy(EMPTY_LINE)
 
@@ -229,12 +247,7 @@ def parse_event_gamma(event_string:str, start_time:datetime, timestamp_correctio
         if match_dict['Duration']=='' and any(output_line['EventKey'].startswith(x) for x in ['arousal', 'leg_movement', 'snore', 'artifact']):
             output_line['Duration'] = 3
         else:
-            try:
-                match_dict['Duration'] = float(match_dict['Duration'])
-            except Exception as e:
-                print(match_dict)
-                print(output_line)
-                raise e
+            match_dict['Duration'] = float(match_dict['Duration'])
             if (match_dict['Duration'] < 10 and output_line['EventKey']=='desaturation') or (match_dict['Duration'] < 5):
                 output_line['Duration'] = match_dict['Duration']*100
             else:
@@ -245,7 +258,6 @@ def parse_event_gamma(event_string:str, start_time:datetime, timestamp_correctio
 
         return output_line
     else:
-        print(event_string_sub)
         return None
 
 
@@ -369,13 +381,14 @@ def process_gamma_log(recording:str, input_filename:str, output_filename:str, ma
         
         # Process lines
         for event_line in events_file.read().splitlines():
+            # Skip spurious lines
             if len(event_line.replace('\t','').strip("\t \n"))<=5:
                 continue
+
             # Parse line
             output_line = parse_event_gamma(event_line, start_time, timestamp_correction, mapping)
             if output_line is None:
-                len_str = len(event_line.replace('\t','').strip("\t \n"))
-                print(f"Parsing error gamma in line: {event_line} {len_str}")
+                print(f"Parsing error gamma in line: {event_line}")
                 no_error = False
                 raise ValueError
             
@@ -425,7 +438,6 @@ if __name__ == "__main__":
     non_mapped_lines = set()
 
     # Process recordings
-    # recordings = ['wsc-visit2-77724-nsrr']
     eta = None
     total_time = 0
     for i, recording in enumerate(recordings, start=1):
@@ -446,17 +458,15 @@ if __name__ == "__main__":
         # Parse file
         if not has_allscore:
             no_error = True
-            # raise NotImplementedError
             no_error, unmapped  = process_gamma_log(recording, recording_path, output_filename, mapping)
-            non_mapped_lines.update(unmapped)
         else:
             no_error = True
-            # TODO passthrough while working on gamma files
-            # no_error, unmapped  = process_twin_log(recording, allscore_filename, output_filename, mapping)
-            # non_mapped_lines.update(unmapped)
+            no_error, unmapped  = process_twin_log(recording, allscore_filename, output_filename, mapping)
         if no_error == False:
             print(f"Error in parsing recording {recording}. Exiting.")
             sys.exit(1)
+        else:
+            non_mapped_lines.update(unmapped)
 
         # Log time end and update ETA
         t_end = perf_counter()

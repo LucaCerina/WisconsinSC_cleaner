@@ -154,5 +154,6 @@ gain:gain_set_np|gains et pushed on np|gains set pushed on np|gainset pushed on 
 gain:gain_set_np|np gain set pusehd|np gain set pushed'|np gain set tressed|np gain ssset pressed|np gain st pressed|np gan set pressed|press np gain set|pressed gaain set|pressed gain set np
 gain:gain_set_np|pressed nasal pres. gain set|pressed np gain set|pressed np gain set and test|pressed np gain srt|pressed np gainset|pressed npm gain set|presses np gain set|fain set pushed on np
 gain:gain_set_np|pushed gain set on np|pushed np gain set|ain set on np|ain set pushed on np|ain set pushed on p|np gai set pressed|np gain set|np gain set pushed|npgain set pressed|pressed np set
-gain:gain_test_np|np test pressed|np gain test|np self test pressed|np test presed|np test pressed|np test/gain set pressed|np tested pressed|npgain test pressed|nptest pressed
+gain:gain_test_np|np test pressed|np gain test|np self test pressed|np test presed|np test pressed|np test/gain set pressed|np tested pressed|npgain test pressed|nptest pressed|pressed np test
 gain:gain_test_np|pressed np test & set|pressed self test for np|pressed self test gain set for n|self test and adjust gain np|self test for np|test for np presed|test for np pressed
+gain:gain_test_np|np tessed pressed|np test|np test pressede|np test pushed|np test presssed
