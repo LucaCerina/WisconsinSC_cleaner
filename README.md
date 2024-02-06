@@ -25,7 +25,8 @@ If it uses the Twin format (log.txt files) sleep stages and event scoring are me
 
 The code does not remove any existing annotation nor modify original files. However, some redundant information is ignored in Twin logs (See [Known Issues](./KNOWN_ISSUES.md) file.)
 
-The script is entirely built on Python standard library and tested on Python v3.8.
+The script is entirely built on Python standard library and tested on Python v3.8. 
+The script is not optimized for efficiency and it parse recordings sequentially, yet parsing 2570 recordings take approximately 5 minutes.
 
 ## Format of the output
 The `.uniform.txt` file will have a columnar format (comma separated values) with a header:
@@ -39,12 +40,14 @@ The Duration and Param[1-3] depend on the type of events
 ### Sleep stages, position and miscellanea
 They don't need extra information other than the event itself. Duration set to -1, Params to 0.
 The duration is defined by the next event of the same type
+### Sensor gain in Twin files
+gain:sensor_affected, -1, new gain value, channel affected, 0
 ### Respiratory events
-Duration of the event in seconds, SpO2 minimum of the event [%], 0, 0
+event_key, Duration of the event in seconds, SpO2 minimum of the event [%], 0, 0
 ### Oxygen desaturations
-Duration of the event in seconds, SpO2 minimum of the event [%], SpO2 drop [%], 0
+event_key, Duration of the event in seconds, SpO2 minimum of the event [%], SpO2 drop [%], 0
 ### Leg movements, arousals, ekg events, snore and any other without additional parameters
-Duration of the event in seconds, 0, 0, 0
+event_key, Duration of the event in seconds, 0, 0, 0
 
 ## Known issues
 See [Known Issues](./KNOWN_ISSUES.md) file.

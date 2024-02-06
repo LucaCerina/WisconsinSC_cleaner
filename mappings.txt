@@ -5,7 +5,8 @@
 recording:start|START RECORDING|recording started
 recording:pause|PAUSED
 recording:resume|RECORDING RESUMED|recoring restarted|recording continued
-recording:stop|STOP RECORDING|recording stopped
+recording:stop|STOP RECORDING|recording stopped|recording stopped -  1|recording stopped -1022|recording stopped -1087|recording stopped -782|recording stopped -901|recording stopped -935
+recording:stop|recording stopped -979|recording stopped -999
 
 # Respiratory events
 apnea:obstructive|obs apnea|oa|apnea|obst apnea|obst. apnea|respiratory event obstructive apnea
@@ -52,16 +53,23 @@ position:sitting|POSITION - SITTING
 position:disconnect|position - disconnect
 
 # Lights
-lights:off|LIGHTS OUT|light out
-lights:on|LIGHTS ON
+lights:off|LIGHTS OUT|light out|lights out  pat 2
+lights:on|LIGHTS ON|lights on  pat 2
 
 # Miscellanea
 event:patient_to_bathroom|PT. TO BATHROOM|to bathroom|bathroom|using urinal|bathroom break|bathroom break, replaced paddle|went to bathroom|used urinal|used bathroom after biocals
+event:patient_to_bathroom|he got up for bathroom
+event:patient_out_of_bed|out of bed|out of bed/drink water
 event:patient_in_bed|BACK IN BED|back from bathroom|ack from bathroom
+event:patient_reading|reading|reading a while|reading a while to get sleepy|reading after bathroom visit|reading for a while|reading for awhile|wanted to read for a while|
+event:patient_reading|wants to read for a while|turned lights on - reading|can't sleep - reading
+event:patient_watching_tv|wanted to watch tv|watching tv for a few minutes|watching tv for a while|watching tv for awhile
 event:patient_disconnection|patient disconnected
 event:patient_connection|patient connected
 event:technician_in|tech in|tech in room
 event:technician_out|tech out
+event:ambient_noise|ambient clicking noise
+event:helicopter|helicopter
 
 # Calibration and montage
 new_montage:npsg_std_plus|NEW MONTAGE - NPSG STANDARD PLUS
@@ -78,16 +86,19 @@ new_montage:mslt_tied_ears|new montage - mslt tied ears
 biocal:start_calibration|biocal started
 biocal:end_calibration|end biocals|biocal stopped
 biocal:impedance_check|impedance check
-biocal:iso_maneuver|iso|iso manuever|iso maneuver
+biocal:iso_maneuver|iso|iso manuever|iso maneuver|isomaneuver
 
-biocal:steady_state_eyes_closed|ss ec|ssec|steady state ec|steady state eyes closed|start steady state - ec|start steady state-ec|eyes closed ss|resuming ss ec|start steady stae -ec|start steady state ec
-biocal:steady_state_eyes_open|ss eo|sseo|ss e0|steady state eyes open|begin steady state-eo|steady state eo|start stready state- eo|start steady state - eo|start steady state-eo|start steady state eo|start steady state-eyes open
+biocal:steady_state_start|start steady state
+biocal:steady_state_eyes_closed|ss ec|ssec|steady state ec|steady state eyes closed|start steady state - ec|start steady state-ec|eyes closed ss|resuming ss ec|start steady stae -ec
+biocal:steady_state_eyes_closed|start steady state ec
+biocal:steady_state_eyes_open|ss eo|sseo|ss e0|steady state eyes open|begin steady state-eo|steady state eo|start stready state- eo|start steady state - eo|start steady state-eo
+biocal:steady_state_eyes_open|start steady state eo|start steady state-eyes open|start steady state - e0
 biocal:steady_state_undefined|steady state
 # NOTE opted to have one signle annotation for end steady state
 biocal:steady_state_end|end steady state ec|end steady state eo|stop steady state eyes open|end steady state-ec|end steady state - ec|end steady state
 biocal:steady_state_end|stop steady state eo|stop steady state - eo|stop steady stae- eo|end steady state-eo|end steady state - eo|end ss eo
 biocal:eyes_closed|EYES CLOSED
-biocal:eyes_open|EYES OPEN
+biocal:eyes_open|EYES OPEN|open eyes
 biocal:eyes_blink_x5|EYES BLINK 5 X|blick
 biocal:eyes_blink|blink|blink several times
 
@@ -112,3 +123,18 @@ biocal:breath_nose|BREATH THRU NOSE|nose breathe|nose breathing
 biocal:breath_snore|SNORE|make snore sounds|make snoring sounds
 biocal:tongue|TONGUE|move tongue
 biocal:count|COUNT|count 1 to 10|count 1-10|count from 1 to 10|counting
+
+gain:increase|increase gain
+gain:decrease|decrease gain
+gain:increase_np|increase np gain|inc np gain
+gain:decrease_np|decrease np gain|dec np gain|decreased np gain|gain decreased on np|np gain down
+# The many names moment...
+gain:gain_set|gain set|gain set pressed|gain set pushed|gain set pushed'|gain set test pressed|gain sey pushed again|gainset pressed|gian set pushed|pressed gain set|pressed gain set pt 1
+gain:gain_set|pushed gain set|pushed gain set again
+gain:gain_set_np|gaiin set pushed on np|gain  set pushed on np|gain sep pushed on np|gain sestr pushed on np|gain set for np pressed|gain set on np|gain set on np pushed|gain set pressed on np
+gain:gain_set_np|gain set puched on np|gain set pudhes on np|gain set pushe on np|gain set pushed for np|gain set pushed in np|gain set pushed o np|gain set pushed on  np|gain set pushed on n
+gain:gain_set_np|gain set pushed on n[|gain set pushed on no|gain set pushed on np|gain set pushed on np again|gain set pushed on np]|gain set pushed onnp|gain set pushen on np
+gain:gain_set_np|gains et pushed on np|gains set pushed on np|gainset pushed on np|gaon set pushed on np|np gain pushed|np gain set presed|np gain set pressed|np gain set pressed on np
+gain:gain_set_np|np gain set pusehd|np gain set pushed'|np gain set tressed|np gain ssset pressed|np gain st pressed|np gan set pressed|press np gain set|pressed gaain set|pressed gain set np
+gain:gain_set_np|pressed nasal pres. gain set|pressed np gain set|pressed np gain set and test|pressed np gain srt|pressed np gainset|pressed npm gain set|presses np gain set
+gain:gain_set_np|pushed gain set on np|pushed np gain set

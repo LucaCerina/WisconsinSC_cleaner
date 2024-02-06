@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
+from copy import copy
 import re
 import sys
-from csv import DictWriter
+import warnings
+from csv import DictWriter, DictReader
 from datetime import datetime, timedelta
 from glob import glob
 from itertools import zip_longest
@@ -16,7 +18,10 @@ __copyright__   = "Copyright 2024, Luca Cerina"
 __email__       = "lccerina@duck.com"
 
 OUTPUT_HEADER = ["Timestamp","EventKey","Duration","Param1","Param2","Param3"]
+EMPTY_LINE = {k:v for (k,v) in zip(OUTPUT_HEADER, ['00:00:00.00', 'error', -1, 0, 0, 0])}
 map_event = lambda x,m: m.get(x, f"misc:{x}")
+
+TWIN_STAGE_COLUMN = "User-Defined Stage"
 
 def datetime_sorter(start_time:datetime, input_time:datetime) -> int:
     """Return distance from start of recording in seconds to sort output list in Twin parsing.
@@ -86,9 +91,6 @@ def parse_event_gamma(event_string:str, mapping:dict) -> Union[dict, None]:
         try:
             # Fill results
             match_dict = match.groupdict()
-            # if match_dict['event_key']=='arousal':
-            #     print(event_string)
-            #     print(match_dict)
             output['EventKey'] = map_event(f"{match_dict['event_key']} {match_dict.get('event_type','')}".strip(), mapping)
             output['Duration'] = match_dict.get('Duration', 3.0) # Default for some events in Gamma recordings (e.g. arousals)
             for i in range(1, 4):
@@ -130,7 +132,7 @@ def process_gamma_log(recording:str, input_filename:str, output_filename:str, ma
                 continue
             
             # Create output line
-            output_line = {k:v for (k,v) in zip(OUTPUT_HEADER, ['00:00:00.00', 'error', -1, 0, 0, 0])}
+            output_line = copy(EMPTY_LINE)
 
             # Timestamp
             timestamp = input_line_split[0]
@@ -181,6 +183,27 @@ def parse_timestamp_twin(timestamp_str:str, start_time:datetime=None) -> Union[d
     else:
         print(timestamp_split)
         return None
+    
+def parse_gain_twin(event_string:str) -> dict:
+    output = {}
+    # Remove extra whitespaces
+    event_string_sub = re.sub("\s+", " ", event_string).strip("\t ")
+    # Define regex
+    regex = r"(?P<event_key>([\w]+|[\w]+\s[\w]+)) \((?P<Param2>\d+)\) : gain\s?: (?P<Param1>\d+)"
+
+    # Match string
+    match = re.match(regex,event_string_sub)
+    if match:
+        # Fill results
+        match_dict = match.groupdict()
+        output['EventKey'] = f"gain:{match_dict['event_key']}"
+        output['Param1'] = match_dict['Param1']
+        output['Param2'] = match_dict['Param2']
+        return output
+    else:
+        print(event_string_sub)
+        return None
+
 
 def process_twin_log(recording:str, input_filename:str, output_filename:str, mapping:dict) -> Tuple[bool, set]:
     """Parse lines from Twin/(log,sco,stg) files. This function receives only the recording id and then apply the specific suffixes
@@ -199,6 +222,10 @@ def process_twin_log(recording:str, input_filename:str, output_filename:str, map
     unmapped = set()
 
     assert input_filename.endswith("-nsrr"), f"Error in Twin parser. Expected input filename to indicate recording id, not specific files. Got {input_filename}"
+    for suffix in ['.log.txt', '.sco.txt', '.stg.txt']:
+        if not Path(input_filename+suffix).exists():
+            warnings.warn(f"File {suffix} not found for Twin recording {recording}")
+            return False, unmapped
 
     # Output is stored in a list of tuples (timestamp, values) so it can be ordered before writing the output file
     temp_output = []
@@ -232,7 +259,7 @@ def process_twin_log(recording:str, input_filename:str, output_filename:str, map
                 start_time = timestamp+timestamp_correction
 
             # Create output line
-            output_line = {k:v for (k,v) in zip(OUTPUT_HEADER, ['00:00:00.00', 'error', -1, 0, 0, 0])}
+            output_line = copy(EMPTY_LINE)
 
             # Parse line
             timestamp = timestamp + timestamp_correction
@@ -241,7 +268,17 @@ def process_twin_log(recording:str, input_filename:str, output_filename:str, map
             # Skip empty lines
             if len(event_key)==0:
                 continue
-            output_line['EventKey'] = map_event(event_key, mapping)
+
+            if not ': gain' in event_key:
+                output_line['EventKey'] = map_event(event_key, mapping)
+            else:
+                parsed_line = parse_gain_twin(event_key)
+                if parsed_line is None:
+                    print(f"Parsing error Gamma in line: {event_key}")
+                    no_error = False
+                    continue
+                output_line.update(parsed_line)
+
             
             # Log non mapped / misc lines
             if output_line['EventKey'].startswith('misc'):
@@ -250,6 +287,27 @@ def process_twin_log(recording:str, input_filename:str, output_filename:str, map
             # Append results
             temp_output.append((timestamp, output_line))
 
+    # Parse sleep stages
+    stage_filename = f"{input_filename}.stg.txt"
+    stage_map = {'7':'undefined','0':'w','1':'n1','2':'n2','3':'n3','4':'n3','5':'rem','6':'undefined'}
+    with open(stage_filename, 'r') as stage_file:
+        reader = DictReader(stage_file, fieldnames=['Epoch', 'User-Defined Stage', 'CAST-Defined Stage'], delimiter='\t')
+        for stage_line in reader:
+            # Header line is in most files, but not all of them. Check the first line and skip if it's the header
+            if stage_line['Epoch']=='Epoch':
+                continue
+            
+            # Create output line
+            output_line = copy(EMPTY_LINE)
+
+            # Parse data NOTE timedelta it's a slightly inefficient function for many repeated values.
+            # The stage loops takes more time than the other files
+            timestamp = start_time+timedelta(seconds=(int(stage_line['Epoch'])-1)*30)
+            output_line['Timestamp'] = timestamp.strftime("%H:%M:%S.00")
+            output_line['EventKey'] = f"stage:{stage_map.get(stage_line[TWIN_STAGE_COLUMN], 'undefined')}"
+
+            # Append results
+            temp_output.append((timestamp, output_line))
 
     # Sort and write output
     temp_output.sort(key=lambda x:datetime_sorter(start_time, x[0]))
@@ -288,7 +346,7 @@ if __name__ == "__main__":
     non_mapped_lines = set()
 
     # Process recordings
-    # recordings = ['wsc-visit2-31738-nsrr']
+    # recordings = ['wsc-visit1-10119-nsrr']
     eta = None
     total_time = 0
     for i, recording in enumerate(recordings, start=1):

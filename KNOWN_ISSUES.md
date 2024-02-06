@@ -21,3 +21,7 @@ Some fields are ignored when parsing the files:
 * Extra columns in log file
 
 Arousals are set to a fixed duration of 3 seconds as from WSC annotation FAQ file available from NSRR.
+
+By default sleep stages are parsed using the 'User-Defined Stage' column in stg.txt files. The CAST-Defined Stage can be used by setting the TWIN_STAGE_COLUMN variable.
+Stage '4' is casted to N3 instead of N4 to align with more recent scoring rules.
+Currently the stages from Twin lead to many repeated lines compared to Gamma logs
