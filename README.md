@@ -48,7 +48,7 @@ The Duration and Param[1-3] depend on the type of events
 ### Sleep stages, position and miscellanea
 They don't need extra information other than the event itself. Duration set to -1, Params to 0.
 The duration is defined by the next event of the same type
-### Sensor gain in Twin files
+### Sensor gain in Gamma files
 gain:sensor_affected, -1, new gain value, channel affected, 0
 ### Respiratory events
 event_key, Duration of the event in seconds, SpO2 minimum of the event [%], 0, 0
