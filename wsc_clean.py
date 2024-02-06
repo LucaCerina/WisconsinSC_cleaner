@@ -21,13 +21,13 @@ OUTPUT_HEADER = ["Timestamp","EventKey","Duration","Param1","Param2","Param3"]
 EMPTY_LINE = {k:v for (k,v) in zip(OUTPUT_HEADER, ['00:00:00.00', 'error', -1, 0, 0, 0])}
 map_event = lambda x,m: m.get(x, f"misc:{x}")
 
-TWIN_STAGE_COLUMN = "User-Defined Stage"
+gamma_STAGE_COLUMN = "User-Defined Stage"
 
 def datetime_sorter(start_time:datetime, input_time:datetime) -> int:
-    """Return distance from start of recording in seconds to sort output list in Twin parsing.
+    """Return distance from start of recording in seconds to sort output list in gamma parsing.
 
     Args:
-        start_time (datetime): Start time of the recording from Twin log file
+        start_time (datetime): Start time of the recording from gamma log file
         input_time (datetime): Input time to be aligned
 
     Returns:
@@ -63,8 +63,8 @@ def load_mappings(mapping_file:str) -> dict:
         output.update({k.lower():v.lower() for (k,v) in zip_longest(source_values,[destination_value], fillvalue=destination_value)})
     return output
 
-def parse_event_gamma(event_string:str, mapping:dict) -> Union[dict, None]:
-    """Parse events with duration and extra parameters from Gamma/allscore log files.
+def parse_event_twin(event_string:str, mapping:dict) -> Union[dict, None]:
+    """Parse events with duration and extra parameters from twin/allscore log files.
        Return None in case of errors
 
     Args:
@@ -92,7 +92,7 @@ def parse_event_gamma(event_string:str, mapping:dict) -> Union[dict, None]:
             # Fill results
             match_dict = match.groupdict()
             output['EventKey'] = map_event(f"{match_dict['event_key']} {match_dict.get('event_type','')}".strip(), mapping)
-            output['Duration'] = match_dict.get('Duration', 3.0) # Default for some events in Gamma recordings (e.g. arousals)
+            output['Duration'] = match_dict.get('Duration', 3.0) # Default for some events in twin recordings (e.g. arousals)
             for i in range(1, 4):
                 output[f'Param{i}'] = match_dict.get(f'Param{i}', 0)
         except Exception:
@@ -101,8 +101,8 @@ def parse_event_gamma(event_string:str, mapping:dict) -> Union[dict, None]:
     else:
         return None
         
-def process_gamma_log(recording:str, input_filename:str, output_filename:str, mapping:dict) -> Tuple[bool, set]:
-    """Parse lines from Gamma/allscore files. This function receives the filename ending as 'allscore.txt'
+def process_twin_log(recording:str, input_filename:str, output_filename:str, mapping:dict) -> Tuple[bool, set]:
+    """Parse lines from twin/allscore files. This function receives the filename ending as 'allscore.txt'
 
     Args:
         recording (str): id of the recording
@@ -117,7 +117,7 @@ def process_gamma_log(recording:str, input_filename:str, output_filename:str, ma
     no_error = True
     unmapped = set()
 
-    assert input_filename.endswith('allscore.txt'), f"Error in Gamma parser. Expected an allscore log file, got {input_filename}"
+    assert input_filename.endswith('allscore.txt'), f"Error in twin parser. Expected an allscore log file, got {input_filename}"
     with open(input_filename, 'r', encoding='utf-8', errors='ignore') as input_file, open(output_filename, 'w', encoding='utf-8') as output_file:
         # Write output header
         writer = DictWriter(output_file, fieldnames=OUTPUT_HEADER, lineterminator='\n')
@@ -143,9 +143,9 @@ def process_gamma_log(recording:str, input_filename:str, output_filename:str, ma
             event_key = event_string_split[0]
             # Parse events with or without durations
             if event_key in ['arousal', 'respiratory event', 'desaturation', 'lm', 'ekg events', 'snore'] and len(event_string_split)>1:
-                parsed_line = parse_event_gamma(input_line_split[1], mapping)
+                parsed_line = parse_event_twin(input_line_split[1], mapping)
                 if parsed_line is None:
-                    print(f"Parsing error Gamma in line: {input_line_split[1]}")
+                    print(f"Parsing error twin in line: {input_line_split[1]}")
                     no_error = False
                     continue
                 output_line.update(parsed_line)
@@ -159,20 +159,21 @@ def process_gamma_log(recording:str, input_filename:str, output_filename:str, ma
 
     return no_error, unmapped
 
-def parse_timestamp_twin(timestamp_str:str, start_time:datetime=None) -> Union[datetime,None]:
-    """Parse timestamps in Twin logs using the hh:mm:ss string or the epoch if start time is available.
+def parse_timestamp_gamma(timestamp_str:str, start_time:datetime=None, timestamp_correction:timedelta=timedelta(seconds=0)) -> Union[datetime,None]:
+    """Parse timestamps in gamma logs using the hh:mm:ss string or the epoch if start time is available.
 
     Args:
         timestamp_str (str): String in the first (if correctly formatted) column of the log file.
         start_time (datetime, optional): Start time of the recording from the first line of the log file. Defaults to None.
+        timestamp_correction (timedelta, optional): Correction for am/pm logs
 
     Returns:
         datetime: parsed datetime
         None: error in parsing
     """
     timestamp_split = re.sub("\s+", " ", timestamp_str).split()
-    if len(timestamp_split)<=2 and re.match(r"\d{2}:\d{2}:\d{2}", timestamp_split[0]):
-        return datetime.strptime(timestamp_split[0], "%H:%M:%S")
+    if len(timestamp_split)<=2 and re.match(r"\d{1,2}:\d{2}:\d{2}", timestamp_split[0]):
+        return datetime.strptime(timestamp_split[0], "%H:%M:%S")+timestamp_correction
     elif len(timestamp_split)<=2 and start_time is not None:
         if re.match(r"\d+", timestamp_split[0]):
             return start_time+timedelta(seconds=(int(timestamp_split[0])-1)*30)
@@ -184,7 +185,7 @@ def parse_timestamp_twin(timestamp_str:str, start_time:datetime=None) -> Union[d
         print(timestamp_split)
         return None
     
-def parse_gain_twin(event_string:str) -> dict:
+def parse_gain_gamma(event_string:str) -> Union[dict, None]:
     output = {}
     # Remove extra whitespaces
     event_string_sub = re.sub("\s+", " ", event_string).strip("\t ")
@@ -204,9 +205,52 @@ def parse_gain_twin(event_string:str) -> dict:
         print(event_string_sub)
         return None
 
+def parse_event_gamma(event_string:str, start_time:datetime, timestamp_correction:timedelta, mapping:dict) -> Union[dict, None]:
+    # Create output line
+    output_line = copy(EMPTY_LINE)
 
-def process_twin_log(recording:str, input_filename:str, output_filename:str, mapping:dict) -> Tuple[bool, set]:
-    """Parse lines from Twin/(log,sco,stg) files. This function receives only the recording id and then apply the specific suffixes
+    # Regular expression
+    regex = r"(?P<Epoch>\d+) (?:(-?\d+\s?-?\d+|)) (?:-?\d+) (?P<event_key>([a-z]+2?|[a-z]+\.?\s[a-z]+2?\s?[a-z^\d]*)) (?:\d+) (?P<timestamp>(\d{1,2}:\d{2}:\d{2}|))\s?(?P<Param1>-*\d*.?\d*)\s?(?P<Param2>-?\d*.?\d*)\s?(?P<Duration>(-?\d*.?\d*))"
+
+    # Remove extra whitespaces
+    event_string_sub = re.sub("\s+", " ", event_string).strip("\t ").lower()
+    match = re.fullmatch(regex, event_string_sub)
+    if match:
+        # Fill results
+        match_dict = match.groupdict()
+
+        output_line['EventKey'] = map_event(f"gamma_{match_dict['event_key']}", mapping)
+        # Get timestamp
+        output_line['Timestamp'] = parse_timestamp_gamma(f"{match_dict['timestamp']} {match_dict['Epoch']}", start_time, timestamp_correction)
+        # Move Param2 to Duration for partial matches
+        if match_dict['Param2']!='' and match_dict['Duration']=='':
+            match_dict['Duration'] = match_dict.pop('Param2')
+        # Checks on Duration sometimes apneas and desaturations are divided by 100
+        if match_dict['Duration']=='' and any(output_line['EventKey'].startswith(x) for x in ['arousal', 'leg_movement', 'snore', 'artifact']):
+            output_line['Duration'] = 3
+        else:
+            try:
+                match_dict['Duration'] = float(match_dict['Duration'])
+            except Exception as e:
+                print(match_dict)
+                print(output_line)
+                raise e
+            if (match_dict['Duration'] < 10 and output_line['EventKey']=='desaturation') or (match_dict['Duration'] < 5):
+                output_line['Duration'] = match_dict['Duration']*100
+            else:
+                output_line['Duration'] = match_dict['Duration']
+        # Add Params
+        for i in range(1, 4):
+            output_line[f'Param{i}'] = match_dict.get(f'Param{i}', 0)
+
+        return output_line
+    else:
+        print(event_string_sub)
+        return None
+
+
+def process_gamma_log(recording:str, input_filename:str, output_filename:str, mapping:dict) -> Tuple[bool, set]:
+    """Parse lines from gamma/(log,sco,stg) files. This function receives only the recording id and then apply the specific suffixes
 
     Args:
         recording (str): id of the recording
@@ -221,10 +265,10 @@ def process_twin_log(recording:str, input_filename:str, output_filename:str, map
     no_error = True
     unmapped = set()
 
-    assert input_filename.endswith("-nsrr"), f"Error in Twin parser. Expected input filename to indicate recording id, not specific files. Got {input_filename}"
+    assert input_filename.endswith("-nsrr"), f"Error in gamma parser. Expected input filename to indicate recording id, not specific files. Got {input_filename}"
     for suffix in ['.log.txt', '.sco.txt', '.stg.txt']:
         if not Path(input_filename+suffix).exists():
-            warnings.warn(f"File {suffix} not found for Twin recording {recording}")
+            warnings.warn(f"File {suffix} not found for gamma recording {recording}")
             return False, unmapped
 
     # Output is stored in a list of tuples (timestamp, values) so it can be ordered before writing the output file
@@ -245,9 +289,9 @@ def process_twin_log(recording:str, input_filename:str, output_filename:str, map
                 log_line_split = log_line_split[1:]
             
             # Parse timestamp
-            timestamp = parse_timestamp_twin(log_line_split[0], start_time)
+            timestamp = parse_timestamp_gamma(log_line_split[0], start_time)
             if timestamp is None:
-                print(f"Parsing error Twin in line: {log_line}")
+                print(f"Parsing error gamma in line: {log_line}")
                 continue
 
             # First line checks
@@ -272,9 +316,9 @@ def process_twin_log(recording:str, input_filename:str, output_filename:str, map
             if not ': gain' in event_key:
                 output_line['EventKey'] = map_event(event_key, mapping)
             else:
-                parsed_line = parse_gain_twin(event_key)
+                parsed_line = parse_gain_gamma(event_key)
                 if parsed_line is None:
-                    print(f"Parsing error Gamma in line: {event_key}")
+                    print(f"Parsing error gamma in line: {event_key}")
                     no_error = False
                     continue
                 output_line.update(parsed_line)
@@ -304,10 +348,45 @@ def process_twin_log(recording:str, input_filename:str, output_filename:str, map
             # The stage loops takes more time than the other files
             timestamp = start_time+timedelta(seconds=(int(stage_line['Epoch'])-1)*30)
             output_line['Timestamp'] = timestamp.strftime("%H:%M:%S.00")
-            output_line['EventKey'] = f"stage:{stage_map.get(stage_line[TWIN_STAGE_COLUMN], 'undefined')}"
+            output_line['EventKey'] = f"stage:{stage_map.get(stage_line[gamma_STAGE_COLUMN], 'undefined')}"
 
             # Append results
             temp_output.append((timestamp, output_line))
+
+    # Parse events
+    events_filename = f"{input_filename}.sco.txt"
+    with open(events_filename, 'r') as events_file:
+        # Skip header line. Sometimes there is more than 1
+        first_line = events_file.readline()
+        has_header = False
+        while first_line.startswith("Epoch"):
+            first_line = events_file.readline()
+            has_header = True
+        
+        # Return to first line if they don't have a header
+        if not has_header:
+            events_file.seek(0)
+        
+        # Process lines
+        for event_line in events_file.read().splitlines():
+            if len(event_line.replace('\t','').strip("\t \n"))<=5:
+                continue
+            # Parse line
+            output_line = parse_event_gamma(event_line, start_time, timestamp_correction, mapping)
+            if output_line is None:
+                len_str = len(event_line.replace('\t','').strip("\t \n"))
+                print(f"Parsing error gamma in line: {event_line} {len_str}")
+                no_error = False
+                raise ValueError
+            
+            # Append results
+            timestamp = output_line['Timestamp']
+            output_line['Timestamp'] = timestamp.strftime("%H:%M:%S.00")
+            temp_output.append((timestamp, output_line))
+
+            # Log non mapped / misc lines
+            if output_line['EventKey'].startswith('misc'):
+                unmapped.add(f"{recording} - {timestamp} - {output_line['EventKey']}")
 
     # Sort and write output
     temp_output.sort(key=lambda x:datetime_sorter(start_time, x[0]))
@@ -346,7 +425,7 @@ if __name__ == "__main__":
     non_mapped_lines = set()
 
     # Process recordings
-    # recordings = ['wsc-visit1-10119-nsrr']
+    # recordings = ['wsc-visit2-77724-nsrr']
     eta = None
     total_time = 0
     for i, recording in enumerate(recordings, start=1):
@@ -368,12 +447,12 @@ if __name__ == "__main__":
         if not has_allscore:
             no_error = True
             # raise NotImplementedError
-            no_error, unmapped  = process_twin_log(recording, recording_path, output_filename, mapping)
+            no_error, unmapped  = process_gamma_log(recording, recording_path, output_filename, mapping)
             non_mapped_lines.update(unmapped)
         else:
             no_error = True
-            # TODO passthrough while working on twin files
-            # no_error, unmapped  = process_gamma_log(recording, allscore_filename, output_filename, mapping)
+            # TODO passthrough while working on gamma files
+            # no_error, unmapped  = process_twin_log(recording, allscore_filename, output_filename, mapping)
             # non_mapped_lines.update(unmapped)
         if no_error == False:
             print(f"Error in parsing recording {recording}. Exiting.")

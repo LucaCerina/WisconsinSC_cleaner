@@ -20,13 +20,13 @@ The mapping of annotations is available in the `mappings.txt` file in the form `
 
 An extra text file includes all lines that were not mapped.
 
-If a recording uses the Gamma format (allscore.txt files) the output is kept as one file.
-If it uses the Twin format (log.txt files) sleep stages and event scoring are merged together with the log.
+If a recording uses the Twin format (allscore.txt files) the output is kept as one file.
+If it uses the Gamma format (log.txt files) sleep stages and event scoring are merged together with the log.
 
-The code does not remove any existing annotation nor modify original files. However, some redundant information is ignored in Twin logs (See [Known Issues](./KNOWN_ISSUES.md) file.)
+The code does not remove any existing annotation nor modify original files. However, some redundant information is ignored in Gamma logs (See [Known Issues](./KNOWN_ISSUES.md) file.)
 
 The script is entirely built on Python standard library and tested on Python v3.8. 
-The script is not optimized for efficiency and it parse recordings sequentially, yet parsing 2570 recordings take approximately 5 minutes.
+The script is not optimized for efficiency and it parse recordings sequentially. Parsing 2570 recordings takes less than 10 minutes.
 
 ## Format of the output
 The `.uniform.txt` file will have a columnar format (comma separated values) with a header:
