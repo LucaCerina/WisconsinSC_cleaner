@@ -9,11 +9,11 @@ from glob import glob
 from importlib import resources
 from itertools import zip_longest
 from time import perf_counter
-from typing import Tuple, Union
+from typing import Tuple, Union, List
 
 from pathlib2 import Path
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 __author__      = "Luca Cerina"
 __copyright__   = "Copyright 2024, Luca Cerina"
 __email__       = "lccerina@duck.com"
@@ -66,6 +66,19 @@ def load_mappings() -> dict:
         # Assign it to output
         output.update({k.lower():v.lower() for (k,v) in zip_longest(source_values,[destination_value], fillvalue=destination_value)})
     return output
+
+def find_recordings(folder:str) -> List[str]:
+    """Extract all files that match "wsc-visitX-YYYYY-nsrr" ending with ".allscore.txt" or ".log.txt"
+
+    Args:
+        folder (str): Path to the folder containing the log files
+
+    Returns:
+        List[str]: List of recordings
+    """
+    assert(Path(folder).exists()), f"Folder {folder} not found."
+    recordings = [re.findall(r"[a-z]+(?:/|\\)(wsc-visit\d?-\d+-nsrr).(?:log|allscore).txt", x)[0] for x in glob(f"{folder}*.allscore.txt")+glob(f"{folder}*.log.txt")]
+    return recordings
 
 def parse_event_twin(event_string:str, mapping:dict) -> Union[dict, None]:
     """Parse events with duration and extra parameters from twin/allscore log files.
@@ -433,9 +446,11 @@ def main():
 
     # Get all recordings
     print("Identifying recordings")
-    log_exists = lambda x: Path(f"{folder}/{x}.log.txt").exists() or Path(f"{folder}/{x}.allscore.txt").exists()
-    recordings = [Path(recording).stem for recording in glob(f"{folder}*.edf") if log_exists(Path(recording).stem)]
+    recordings = find_recordings(folder)
     n_recordings = len(recordings)
+    if n_recordings == 0:
+        print(f"Error! No recordings found in folder {folder}. Exiting")
+        sys.exit(1)
     print(f"Starting the cleaning of {n_recordings} recordings")
 
     # Keep track of non mapped lines

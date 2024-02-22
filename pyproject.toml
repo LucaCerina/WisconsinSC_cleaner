@@ -9,7 +9,7 @@ wisconsinsc_cleaner = ["*.txt"]
 
 [project]
 name = "wisconsinsc_cleaner"
-version = "0.0.1"
+version = "0.0.2"
 description = "A tool to clean and uniform annotation files from Wisconsin Sleep Cohort (WSC), distributed by NSRR"
 readme = "README.md"
 requires-python = ">=3.8"
