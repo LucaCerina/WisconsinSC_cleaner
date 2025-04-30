@@ -1,4 +1,6 @@
 # WisconsinSC_cleaner
+ARCHIVED to deter GitHub/Microsoft tracking and profiteering! Now available at https://codeberg.org/LucaCerina/WisconsinSC_cleaner
+For details about leaving GitHub: https://sfconservancy.org/GiveUpGitHub/
 A tool to clean and uniform annotation files from Wisconsin Sleep Cohort (WSC), distributed by NSRR [here](https://sleepdata.org/datasets/wsc).
 
 ## Motivation
